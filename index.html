@@ -5,85 +5,125 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>hayro: a fork's changes and findings</title>
 <style>
+/* The html-report look: neutral greys, hairlines, one warm accent. Light by default; the reader's system setting switches
+   it to dark. Every colour below holds at least 4.5:1 against the background it sits on. */
 :root {
-  --fg: var(--foreground, #1c1c1e);
-  --mfg: var(--muted-foreground, #6b6b70);
-  --bd: var(--border, #e2e2e6);
-  --cd: var(--card, #f6f6f8);
-  --cb: var(--code-background, #f0f0f3);
-  --ac: var(--accent, #2f6fdf);
-  --ok: var(--success, #2e8b57);
-  --wn: var(--warning, #b7791f);
-  --bad: var(--destructive, #c0392b);
-  --r: var(--radius, 8px);
+  color-scheme: light dark;
+  --bg: #ffffff; --surface: #f6f6f7; --hover: #f0f0f2; --raise: #e9e9ec;
+  --bar: #fafafa;
+  --fg: #111113; --text: #333338; --fg-2: #5f5f66; --fg-3: #6e6e75;
+  --line: #e6e6ea; --line-2: #d4d4da;
+  --accent: #8c5a3a; --good: #1d7a45; --bad: #b8432b; --warn: #91600f; --violet: #5a50c8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0a; --surface: #0f0f0f; --hover: #141414; --raise: #1c1c1c;
+    --bar: #030303;
+    --fg: #f0f0f0; --text: #c6c6c6; --fg-2: #a3a3a3; --fg-3: #8a8a8a;
+    --line: #1f1f1f; --line-2: #2e2e2e;
+    --accent: #c5ac98; --good: #6fbf8b; --bad: #e07a63; --warn: #d9a55a; --violet: #9b94ee;
+  }
 }
 * { box-sizing: border-box; }
-body { font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif); color: var(--fg); line-height: 1.5; font-size: 15px; }
-main { max-width: 980px; margin: 0 auto; padding: 0 0 48px; }
-h1 { font-size: 26px; margin: 8px 0 4px; letter-spacing: -0.01em; }
-h2 { font-size: 20px; margin: 40px 0 8px; padding-top: 8px; border-top: 1px solid var(--bd); }
-h3 { font-size: 15px; margin: 24px 0 8px; color: var(--mfg); text-transform: uppercase; letter-spacing: 0.04em; }
-p { margin: 8px 0; }
-a { color: var(--ac); text-decoration: none; }
+html { scroll-padding-top: 72px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+
+header { position: sticky; top: 0; z-index: 3; display: flex; align-items: stretch; gap: 28px; height: 60px; padding: 0 28px; background: var(--bar); border-bottom: 1px solid var(--line); }
+header .brand { align-self: center; color: var(--fg); min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 16px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+header nav { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; border-left: 1px solid var(--line); padding-left: 24px; }
+header nav a { display: flex; align-items: center; color: var(--fg-3); font-size: 13.5px; text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; }
+header nav a:hover, header nav a.on { color: var(--fg); text-decoration: none; }
+header nav a.on { border-bottom-color: var(--accent); }
+
+main { max-width: 1000px; margin: 0 auto; padding: 32px 28px 64px; }
+section { padding: 32px 0; border-top: 1px solid var(--line); }
+section:first-of-type { border-top: 0; padding-top: 4px; }
+h1 { color: var(--fg); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; margin: 0 0 8px; }
+h2 { color: var(--fg); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
+h3 { color: var(--fg); font-size: 15px; font-weight: 600; margin: 28px 0 8px; }
+p { margin: 8px 0; max-width: 80ch; }
+a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-code { font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace); font-size: 0.88em; background: var(--cb); padding: 1px 4px; border-radius: 4px; }
-pre { background: var(--cb); padding: 12px; border-radius: var(--r); overflow-x: auto; font-size: 12.5px; line-height: 1.4; }
-pre code { background: none; padding: 0; }
-.lede { color: var(--mfg); margin-bottom: 20px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
-.card { background: var(--cd); border: 1px solid var(--bd); border-radius: var(--r); padding: 16px; }
-.card .big { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.card .lbl { color: var(--mfg); font-size: 13px; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 8px 0; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bd); vertical-align: top; }
-th { color: var(--mfg); font-weight: 600; font-size: 12.5px; }
-td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+strong, b { font-weight: 600; }
+code { font: 0.86em/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--surface); border: 1px solid var(--line); padding: 0 4px; border-radius: 4px; }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font: 12.5px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+ul { padding-left: 20px; max-width: 80ch; }
+li { margin: 6px 0; }
+.lede { color: var(--fg-2); font-size: 16px; }
+.muted { color: var(--fg-3); }
+
+/* Tiles: the figures the outcome rests on. */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 24px 0 8px; }
+.card { background: var(--surface); padding: 16px 18px; }
+.card .big { color: var(--fg); font-size: 20px; font-weight: 550; letter-spacing: -0.02em; line-height: 1.25; }
+.card .lbl { color: var(--fg-2); font-size: 12.5px; margin-top: 6px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--fg-2); font-weight: 500; font-size: 12.5px; }
+tbody tr:hover { background: var(--hover); }
+td.r, th.r { text-align: right; white-space: nowrap; }
 th.r { white-space: normal; }
 @media (max-width: 560px) { td code { overflow-wrap: anywhere; } }
-tr.win td.r:nth-child(4) { color: var(--ok); font-weight: 600; }
-tr.loss td.r:nth-child(4) { color: var(--bad); font-weight: 600; }
-tr.loss td.r:nth-child(4) { white-space: normal; }
-td.crate { color: var(--mfg); white-space: nowrap; }
-.muted { color: var(--mfg); }
-details { border: 1px solid var(--bd); border-radius: var(--r); margin: 6px 0; background: var(--cd); }
-details[open] { background: transparent; }
-summary { cursor: pointer; padding: 10px 12px; display: flex; gap: 10px; align-items: baseline; list-style: none; }
+tr.win td.r:nth-child(4) { color: var(--good); font-weight: 600; }
+tr.loss td.r:nth-child(4) { color: var(--bad); font-weight: 600; white-space: normal; }
+td.crate { color: var(--fg-3); white-space: nowrap; }
+.perf td:first-child { width: 55%; }
+/* A row and the line under it that says why are one item: they share the hover and the hairline. */
+.perf tr.has-why td { border-bottom: 0; padding-bottom: 2px; }
+.perf tr.why td { color: var(--fg-2); font-size: 13px; line-height: 1.5; padding-top: 0; }
+.perf tbody tr.has-why:hover, .perf tbody tr.has-why:hover + tr.why, .perf tbody tr.why:hover { background: var(--hover); }
+
+/* Write-ups: one collapsible row each. */
+details { border: 1px solid var(--line); border-radius: 10px; margin: 6px 0; background: var(--surface); }
+details[open] { background: var(--bg); }
+summary { cursor: pointer; padding: 10px 14px; display: flex; gap: 10px; align-items: baseline; list-style: none; color: var(--fg); }
 summary::-webkit-details-marker { display: none; }
-summary .num { color: var(--mfg); font-variant-numeric: tabular-nums; min-width: 22px; }
+summary:hover { background: var(--hover); border-radius: 10px; }
+summary .num { color: var(--fg-3); min-width: 26px; }
 summary .t { flex: 1; }
+details:target { border-color: var(--accent); }
 .badge { font-size: 12px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid currentColor; }
-.badge.small { color: var(--ok); }
-.badge.moderate { color: var(--wn); }
-.badge.redesign { color: var(--ac); }
-.badge.none { color: var(--mfg); }
-.facts { padding: 0 12px 4px 44px; font-size: 14px; }
-.facts b { color: var(--mfg); font-weight: 600; margin-right: 6px; }
-.body { padding: 4px 12px 12px 44px; font-size: 14px; overflow-wrap: anywhere; }
+.badge.small { color: var(--good); }
+.badge.moderate { color: var(--warn); }
+.badge.redesign { color: var(--violet); }
+.badge.none { color: var(--fg-3); }
+.facts { padding: 2px 14px 4px 50px; font-size: 13.5px; }
+.facts b { color: var(--fg-2); font-weight: 600; margin-right: 6px; }
+.body { padding: 4px 14px 14px 50px; font-size: 14px; overflow-wrap: anywhere; }
 .body p:first-child { margin-top: 4px; }
 .body table { display: block; overflow-x: auto; }
 /* Words in a cell stay whole; a table too wide for the screen scrolls instead. */
 .body th, .body td { overflow-wrap: normal; }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--mfg); margin: 8px 0; }
-ul { padding-left: 20px; }
-li { margin: 4px 0; }
-@media (max-width: 560px) {
-  summary { flex-wrap: wrap; }
-  .facts, .body { padding-left: 12px; }
-}
-.vnum { color: var(--mfg); font-size: 12px; min-width: 44px; }
-.perf td:first-child { width: 55%; }
-.perf tr.has-why td { border-bottom: 0; padding-bottom: 2px; }
-.perf tr.why td { color: var(--mfg); font-size: 13px; line-height: 1.45; padding-top: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--fg-2); margin: 12px 0; }
+.vnum { color: var(--fg-3); font-size: 12px; min-width: 44px; }
 details.code { border: 0; background: none; margin: 8px 0; }
-details.code > summary { padding: 4px 0; color: var(--mfg); font-size: 13px; }
+details.code > summary { padding: 4px 0; color: var(--fg-2); font-size: 13px; }
+details.code > summary:hover { background: none; color: var(--fg); }
 details.code > summary::before { content: '▸ '; }
 details.code[open] > summary::before { content: '▾ '; }
+
+@media (max-width: 640px) {
+  header { gap: 16px; padding: 0 16px; }
+  header .brand { display: none; }
+  header nav { border-left: 0; padding-left: 0; }
+  main { padding: 20px 16px 48px; }
+  h1 { font-size: 23px; }
+  summary { flex-wrap: wrap; }
+  .facts, .body { padding-left: 14px; }
+}
 
 </style>
 </head>
 <body>
+<header>
+  <span class="brand">hayro: a fork's changes and findings</span>
+  <nav></nav>
+</header>
 <main>
 
+<section id="summary" data-nav="Summary">
 <h1>hayro: a fork's changes, and what we found on the way</h1>
 <p class="lede">21 October 2026. Our branch
 <a href="https://github.com/Vantrongs/hayro/tree/perf/issue87"><code>perf/issue87</code></a> of
@@ -100,6 +140,8 @@ and lists what we found in vello and kurbo.</p>
   <div class="card"><div class="big">28 findings</div><div class="lbl">on main: 11 with a small fix, 5 moderate, 10 inside a larger rewrite, 2 without a fix</div></div>
 </div>
 
+</section>
+<section id="speed" data-nav="Speed">
 <h2>Speed</h2>
 <p>An Intel i7-4790S PC on Windows 10, <code>render_bench</code> on one thread over the corpus at the fork point,
 two rounds, each rendering every file three times (on this PC every third render runs about 20 % slower whatever the build,
@@ -151,7 +193,9 @@ corpus run in the table.</p>
 </table>
 <p>12 more files crossed the bar in a corpus run but match main in a paired run: <code>pdfjs/bug766138</code> (141.7 vs 143.6 ms), <code>pdfium/42271192</code> (81.9 vs 83.2 ms), <code>pdfbox/3670</code> (93.2 vs 94.3 ms), <code>pdfium/42271956</code> (66.9 vs 66.7 ms), <code>pdfjs/issue1998</code> (100.0 vs 100.3 ms), <code>pdfbox/1693</code> (75.1 vs 74.9 ms), <code>pdfbox/4518</code> (45.7 vs 45.4 ms), <code>pdfjs/issue2442</code> (76.4 vs 75.8 ms), <code>pdfjs/issue1015</code> (154.2 vs 152.2 ms), <code>pdfjs/issue14982</code> (190.2 vs 195.3 ms), <code>pdfbox/498</code> (68.4 vs 69.7 ms), <code>corpus/0083781</code> (118.4 vs 117.4 ms).</p>
 
-<h3>Peak memory</h3>
+</section>
+<section id="memory" data-nav="Memory">
+<h2>Peak memory</h2>
 <p>The same PC on 21 October, otherwise idle: one <code>render_bench --iter 1</code> process per file, the two builds
 alternating file by file, peak commit (private bytes) and peak working set from <code>GetProcessMemoryInfo</code> after
 the process exits. The builds: main at <a href="https://github.com/LaurenzV/hayro/commit/036fb21c"><code>036fb21c</code></a>
@@ -179,6 +223,8 @@ The 6 files where we use at least 5 MiB more, largest first, with causes from he
 </table>
 <p>The largest drops, in MiB: <code>pdfjs/bug1791583</code> 1,486.7 → 616.8, <code>pdfbox/1915_13</code> 365.3 → 142.6, <code>pdfbox/1915</code> 362.1 → 141.0.</p>
 
+</section>
+<section id="findings" data-nav="Findings">
 <h2>Findings on main</h2>
 <p>Each was reproduced on <code>af0dc88a</code> and checked against your tracker on 20 October. Click a row for the full write-up
 with a reproduction. Nothing is posted yet: tell me which you'd like as issues or PRs.</p>
@@ -686,12 +732,15 @@ startxref
 <p>With <code>x1000</code> instead of <code>1e3</code>, both pages stay. <code>Dict::from_bytes(b"&lt;&lt; /A 1e3 /B 2 &gt;&gt;")</code> and <code>&lt;&lt; /A 0R /B 2 &gt;&gt;</code> return <code>None</code>, while <code>&lt;&lt; /A x1000 /B 2 &gt;&gt;</code> reads with <code>/B</code> 2.</p>
 <p><strong>Cause.</strong> Since #996 (for #994), <code>Number</code> rejects such a token (<a href="https://github.com/LaurenzV/hayro/blob/af0dc88aa59064201b9259d348e52445cf7744fd/hayro-syntax/src/object/number.rs#L103-L106">number.rs</a>, <a href="https://github.com/LaurenzV/hayro/blob/af0dc88aa59064201b9259d348e52445cf7744fd/hayro-syntax/src/object/number.rs#L260-L264">L260-L264</a>). Outside content streams, nothing else reads such a token: <code>Object::skip</code> and <code>Object::read</code> hand every token that starts with a digit, <code>.</code>, <code>+</code> or <code>-</code> to <code>Number</code> and fail when it does (<a href="https://github.com/LaurenzV/hayro/blob/af0dc88aa59064201b9259d348e52445cf7744fd/hayro-syntax/src/object/mod.rs#L195">object/mod.rs</a>, <a href="https://github.com/LaurenzV/hayro/blob/af0dc88aa59064201b9259d348e52445cf7744fd/hayro-syntax/src/object/mod.rs#L227">L227</a>), and so do the array, the dictionary around it and the object holding them. A word that doesn't start like a number is read as null (<a href="https://github.com/LaurenzV/hayro/blob/af0dc88aa59064201b9259d348e52445cf7744fd/hayro-syntax/src/object/mod.rs#L228-L233">object/mod.rs</a>).</p>
 <p><strong>Fix.</strong> Outside content streams, read a token that <code>Number</code> refuses as null, up to the next white space or delimiter, as the <code>_</code> arm does for other words. MuPDF does the same: <code>lex_number</code> makes such a token a keyword, which <code>pdf_parse_array</code> and <code>pdf_parse_dict</code> store as null. Content streams keep the handling from #996.</p>
-<p>Our branch <a href="https://github.com/Vantrongs/hayro/compare/036fb21c...pr/number-token-drops-page"><code>pr/number-token-drops-page</code></a> does this on <code>main</code> at 036fb21c, in six commits, about 80 lines of code plus tests:</p>
+<p>Our branch <a href="https://github.com/Vantrongs/hayro/compare/036fb21c...pr/number-token-drops-page"><code>pr/number-token-drops-page</code></a> does this on <code>main</code> at 036fb21c, in seven commits, about 80 lines of code plus tests:</p>
 <ul>
 <li>Validation and reading decide what a reference is with one function, <code>ObjRef::read_in</code>, so skip and read keep agreeing, which #1191 was about. A reference is recognised where 036fb21c recognises it, <code>3 0.0 R</code> included, except where a number runs into a regular character: <code>[8 0R]</code> reads as <code>[8 null]</code> (#1191's test <code>malformed_ref_is_not_valid_array</code> changes with it), and <code>8 -R</code> and <code>8 .R</code> are not references.</li>
 <li>Outside content streams, <code>Number::read</code> rejects a lone sign or dot before a regular character, so <code>.foo</code> reads as null and <code>/Rotate -foo</code> is not read as 0.</li>
 <li>A fraction of any length no longer overflows its digit count: on <code>main</code>, more than 4 Gi fraction digits overflow a <code>u32</code>, and past <code>i32::MAX</code> the number reads as infinite.</li>
 <li>A generated test checks that reading agrees with skipping and with 036fb21c's rules.</li>
+<li>
+<h1>1501's tests <code>array_with_unreadable_item</code> and <code>dict_with_unreadable_value</code> read a dictionary followed by <code>stream</code> (<code>[true &lt;&lt;&gt;&gt;stream false]</code>, <code>&lt;&lt; /A &lt;&lt;&gt;&gt;stream /B true &gt;&gt;</code>) instead of <code>/#zz</code>: our branch <code>pr/name-bare-number-sign</code> reads <code>/#zz</code> as a name, just as this branch reads the next candidate, <code>+-1</code>, as null, while the new value stays unreadable on each branch and on their merge, so the tests reach the handling they guard whichever lands first. It stays unreadable only because of a separate defect, which we'll report separately: inside an array or dictionary, a dictionary followed by <code>stream</code> is read as a stream.</h1>
+</li>
 </ul>
 <p>Happy to open the PR.</p>
 <p>Related: <a href="#hayro-keyword-prefix-read">№9</a>, where a word that starts like <code>true</code>, <code>false</code> or <code>null</code> has the opposite problem.</p></div></details>
@@ -792,7 +841,9 @@ assert_eq!(char_procs.keys().count(), 2); // 3 keys
 <li>the two counts above are 5 and 3;</li>
 <li>every page of <code>issue6692.pdf</code> is within 5% of MuPDF's dark pixels (page 52: 47,253 against 45,832).</li>
 </ul>
-<p><code>name_3</code> expected <code>/AB#FG</code> to be unreadable; the branch changes it to expect the name <code>AB#FG</code>. It adds tests for <code>/#</code>, <code>/A#4</code>, <code>/#2#23</code> and the array above, and turns on the <code>issue6692</code> render test (page index 10), which <code>hayro-tests</code> ignored. Happy to open the PR.</p>
+<p><code>name_3</code> expected <code>/AB#FG</code> to be unreadable; the branch changes it to expect the name <code>AB#FG</code>. It adds tests for <code>/#</code>, <code>/A#4</code>, <code>/#2#23</code> and the array above, and turns on the <code>issue6692</code> render test (page index 10), which <code>hayro-tests</code> ignored.</p>
+<p>It also changes #1501's tests <code>array_with_unreadable_item</code> and <code>dict_with_unreadable_value</code> to read a dictionary followed by <code>stream</code> (<code>[true &lt;&lt;&gt;&gt;stream false]</code>, <code>&lt;&lt; /A &lt;&lt;&gt;&gt;stream /B true &gt;&gt;</code>) instead of <code>/#zz</code>. This branch reads <code>/#zz</code> as a name, and our branch <code>pr/number-token-drops-page</code> reads the next candidate, <code>+-1</code>, as null; the new value stays unreadable on each branch and on their merge, so the tests reach the handling they guard whichever lands first. It stays unreadable only because of a separate defect, which we'll report separately: inside an array or dictionary, a dictionary followed by <code>stream</code> is read as a stream.</p>
+<p>Happy to open the PR.</p>
 <p>The array stopping at the unreadable entry is what turns one bad name into a lost font; that is a separate issue (related: <a href="#hayro-array-iter-stops-at-bad-entry">№7</a>).</p></div></details>
 <details id="hayro-predictor-short-last-row"><summary><span class="num">11</span>
 <span class="t">Flate/LZW predictors drop a last row that is cut short, so a page content stream can lose its last operator</span><span class="badge redesign">part of a redesign</span></summary>
@@ -1966,6 +2017,8 @@ startxref
 <p>Separately, the mask being drawn in the clip box of the <code>gs</code> also applies the edge coverage of a fractional clip twice. That doesn't depend on the key, so it gets its own issue (related: <a href="#hayro-soft-mask-clip-edge-twice">№23</a>).</p></div></details>
 
 
+</section>
+<section id="larger" data-nav="Larger changes">
 <h2>Larger changes in the fork</h2>
 <p>These follow what our app needed and are too large to propose as they are. If any of them is useful to you,
 I'd split it into reviewable pieces.</p>
@@ -1995,6 +2048,8 @@ chains use bounded stack, and CCITT output grows with what is decoded.
 (<a href="https://github.com/Vantrongs/hayro/commit/f9aa3ccb"><code>f9aa3ccb</code></a>); mesh shadings (<a href="#hayro-mesh-shading-speed">№25</a>).</li>
 </ul>
 
+</section>
+<section id="vello" data-nav="vello &amp; kurbo">
 <h2>vello and kurbo</h2>
 <p>Much of the speed work under hayro went into our vello fork,
 <a href="https://github.com/Vantrongs/vello/tree/perf/issue87"><code>Vantrongs/vello</code></a> at <code>e2fd85f9</code>,
@@ -3093,6 +3148,8 @@ fn main() {
 }
 </code></pre></details></div></details>
 
+</section>
+<section id="method" data-nav="How it was checked">
 <h2>How this was checked</h2>
 <ul>
 <li><b>Who wrote it.</b> Claude agents (Claude Code) wrote the code and these write-ups under my direction: I set the goals
@@ -3117,6 +3174,33 @@ and allocation counts come from callgrind and heaptrack on Linux. Instruction co
 byte of <code>rep movsb</code> as an instruction, and store-forwarding stalls on that PC cost cycles without instructions.</li>
 </ul>
 
+</section>
 </main>
+<script>
+// The header lists the sections and marks the one in view; a link to a write-up opens it.
+const nav = document.querySelector('header nav');
+const sections = [...document.querySelectorAll('section[data-nav]')];
+for (const s of sections) {
+  const a = document.createElement('a');
+  a.href = '#' + s.id; a.textContent = s.dataset.nav; nav.append(a);
+}
+const links = [...nav.children];
+function mark() {
+  let i = 0;
+  sections.forEach((s, j) => { if (s.getBoundingClientRect().top <= 80) i = j; });
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) i = sections.length - 1;
+  links.forEach((a, j) => a.classList.toggle('on', j === i));
+  // Scroll only the menu: scrollIntoView on a link inside the sticky header would move the page too.
+  const a = links[i], l = a.offsetLeft - nav.offsetLeft;
+  if (l < nav.scrollLeft || l + a.offsetWidth > nav.scrollLeft + nav.clientWidth) nav.scrollLeft = l - 16;
+}
+addEventListener('scroll', mark, { passive: true });
+function open() {
+  const t = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (t && t.tagName === 'DETAILS') { t.open = true; t.scrollIntoView(); }
+}
+addEventListener('hashchange', open);
+open(); mark();
+</script>
 </body>
 </html>
